@@ -66,33 +66,6 @@ AddEventHandler('onServerResourceStart', function(resourceName)
     end
 end)
 
-RegisterServerEvent('ledjo_tabac:add')
-AddEventHandler('ledjo_tabac:add', function(type, amount, name)
-	local xPlayer  = ESX.GetPlayerFromId(source)
-	if type == 'money' then
-		xPlayer.addMoney(amount)
-		TriggerClientEvent('esx:showNotification', source, 'Tu a recu $'..amount 'success')
-	elseif type == 'item' then
-		xPlayer.addInventoryItem(name, amount)
-	end
-end)
-
-RegisterServerEvent('ledjo_tabac:remove')
-AddEventHandler('ledjo_tabac:remove', function(type, amount, name)
-	local xPlayer  = ESX.GetPlayerFromId(source)
-	if type == 'money' then
-		xPlayer.removeMoney(amount)
-	elseif type == 'item' then
-		xPlayer.removeInventoryItem(name, amount)
-	end
-end)
-
-ESX.RegisterServerCallback('ledjo_tabac:getItemAmount', function(source, cb, item)
-	local xPlayer = ESX.GetPlayerFromId(source)
-	local quantity = xPlayer.getInventoryItem(item).count
-
-	cb(quantity)
-end)
 
 ---item
 
