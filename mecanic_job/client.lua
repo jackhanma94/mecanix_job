@@ -1,3 +1,10 @@
+RegisterNetEvent("esx:playerLoaded")
+AddEventHandler("esx:playerLoaded", function(xPlayer) ESX.PlayerData = xPlayer end)
+
+RegisterNetEvent("esx:setJob")
+AddEventHandler("esx:setJob", function(job) ESX.PlayerData.job = job end)
+
+
 ---menu f6
 lib.registerContext({
     id = 'menu_mecano',
@@ -34,14 +41,14 @@ lib.registerContext({
       {
         title = '🔨reparer vehicule',
         description = 'appuyer pour reparer',
-        event = 'reparer',
+        event = 'reparermeca',
         icon = 'bars',
         image = 'https://th.bing.com/th/id/R.6fedeebc437085adc5ac3f16a4ec1fdf?rik=T%2fXVy6SSNis4fQ&riu=http%3a%2f%2fwww.amicalecg.fr%2fwp-content%2fuploads%2f2019%2f05%2freparation.jpg&ehk=EmRivuFgHTYKBIeyd11FTOkEVCuHuvprGpjXt0Bz1wc%3d&risl=&pid=ImgRaw&r=0'
       },
       {
         title = '👋nettoyer vehicule',
         description = 'appuyer pour nettoyer',
-        event = 'nettoyage',
+        event = 'nettoyagemeca',
         icon = 'bars',
         image ='https://th.bing.com/th/id/R.ba29e9cd998fbf2954154301d6326cd8?rik=Y1nrLV1r4os8Ng&pid=ImgRaw&r=0'
       }
@@ -86,8 +93,8 @@ RegisterKeyMapping("lscustom", "menu_mecano", "keyboard", "F6")
 
 
 
-RegisterNetEvent('nettoyage')
-AddEventHandler('nettoyage', function()
+RegisterNetEvent('nettoyagemeca')
+AddEventHandler('nettoyagemeca', function()
     local vehicle   = ESX.Game.GetVehicleInDirection()
     local playerPed = PlayerPedId()
     local hasitem   = exports.ox_inventory:Search('count', Config.item.repa)
@@ -128,8 +135,8 @@ end)
 
 
 
-RegisterNetEvent('reparer')
-RegisterNetEvent('reparer', function()
+RegisterNetEvent('reparermeca')
+RegisterNetEvent('reparermeca', function()
     local vehicle   = ESX.Game.GetVehicleInDirection()
 	  local playerPed = PlayerPedId()
     local hasitem   = exports.ox_inventory:Search('count', Config.item.nettoyage)
@@ -182,7 +189,6 @@ local function OpenMenu()
   lib.registerContext({
       id = "garage",
       title = "garage",
-      onExit = function() CreateThread(PositionGarageCheckmeca) end,
       options = menu
   })
   lib.showContext('garage')
@@ -193,45 +199,31 @@ RegisterNetEvent("clientsidemeca", function(data)
   RequestModel(h)
   while not HasModelLoaded(h) do Wait(0) end 
   local car = CreateVehicle(h, Config.pose.spawn, true, false)
-  TriggerServerEvent('oliann-addkeys', plate)
-  CreateThread(PositionGarageCheckmeca)
   SetPedIntoVehicle(PlayerPedId(), car, -1)
   checkrange(car, data)
 end)
 
-function PositionGarageCheckmeca()
-  local ms   
-  while (function()
-      ms = 1000
-      ESX.PlayerData = ESX.GetPlayerData()
-      if #(GetEntityCoords(PlayerPedId()) - Config.pose.garage) <= 2 and ESX.PlayerData.job.name == Config.JobUtiliser then 
-          lib.showTextUI('[E] - garage menu', {
-            position = "left-center",
-            style = {
-                borderRadius = 0,
-                backgroundColor = '#3fd2d5',
-                color = 'white',
-            }
-          })
-          ms = 0 
+Citizen.CreateThread(function()
+  while true do
+      local Timer = 500
+      local plyPos = GetEntityCoords(PlayerPedId())
+      local dist = #(plyPos-Config.pose.garage)
+      if ESX.PlayerData.job.name == Config.JobUtiliser then
+      if dist <= 10.0 then
+       Timer = 0
+       DrawMarker(2, Config.pose.garage, nil, nil, nil, -90, nil, nil,0.3, 0.2, 0.15, 30, 150, 30, 222, false, true, 0, false, false, false, false)
+      end
+       if dist <= 3.0 then
+          Timer = 0
           if IsControlJustPressed(1,51) then
             OpenMenu()
-            lib.hideTextUI()
-            return false 
           end
-        else
-
+       end
       end
-  
-      if #(GetEntityCoords(PlayerPedId()) - Config.pose.garage) > 2 then
-         lib.hideTextUI()
-      end
-
-      return true 
-    end)() do 
-      Wait(ms)
-    end
+  Citizen.Wait(Timer)
 end
+end)
+
 
 
 
@@ -243,7 +235,6 @@ function checkrange(car, int)
               ms = 0 
               ESX.ShowHelpNotification("Appuie sur E pour ranger : ~b~"..int.name)
               if IsControlJustPressed(1, 51) then
-                  TriggerServerEvent('oliann-removekeys', plate)
                   local plate = ESX.Math.Trim(GetVehicleNumberPlateText(vehicle))
                   ESX.Game.DeleteVehicle(car)
                   cansee = false
@@ -261,7 +252,6 @@ end
 lib.registerContext({
   id = 'boss_menu',
   title = 'boss menu',
-  onExit = function() CreateThread(PositionBossCheck) end,
   options = {
     {
       title = '🤝action menu',
@@ -285,7 +275,6 @@ lib.registerContext({
   onBack = function()
     print('Went back!')
   end,
-  onExit = function() CreateThread(PositionBossCheck) end,
   options = {
     {
       title = 'recruter',
@@ -412,38 +401,26 @@ function mecanoRetraitEntreprise()
 end
 
 
-
-function PositionBossCheck()
-  local ms   
-  while (function()
-      ms = 1000
-      if #(GetEntityCoords(PlayerPedId()) - Config.pose.boss) <= 2 and ESX.PlayerData.job.name == Config.JobUtiliser then
-          lib.showTextUI('[E] - boss menu', {
-            position = "left-center",
-            style = {
-                borderRadius = 0,
-                backgroundColor = '#3fd2d5',
-                color = 'white',
-            }
-          })
-          ms = 0 
+Citizen.CreateThread(function()
+  while true do
+      local Timer = 500
+      local plyPos = GetEntityCoords(PlayerPedId())
+      local dist = #(plyPos-Config.pose.boss)
+      if ESX.PlayerData.job.name == Config.JobUtiliser and ESX.PlayerData.job.grade_name == Config.gradejobboss then
+      if dist <= 10.0 then
+       Timer = 0
+       DrawMarker(2, Config.pose.boss, nil, nil, nil, -90, nil, nil,0.3, 0.2, 0.15, 30, 150, 30, 222, false, true, 0, false, false, false, false)
+      end
+       if dist <= 3.0 then
+          Timer = 0
           if IsControlJustPressed(1,51) then
             lib.showContext('boss_menu')
-            local Tikozaal = {}
-            lib.hideTextUI()
-            return false 
           end
+       end
       end
-  
-      if #(GetEntityCoords(PlayerPedId()) - Config.pose.boss) > 2 then
-         lib.hideTextUI()
-      end
-
-      return true 
-    end)() do 
-      Wait(ms)
-  end
+  Citizen.Wait(Timer)
 end
+end)
 
 
 -- Facture
@@ -492,56 +469,31 @@ AddEventHandler('Mechanic:fermer', function()
 end)
 
 ---coffre
-RegisterNetEvent('OpenMecanoCoffre')
-AddEventHandler('OpenMecanoCoffre', function()
-	exports.ox_inventory:openInventory('stash', {id='coffre_mecano', owner= false, job = Config.JobUtiliser})
-end)
+CreateThread(function()
 
-function PositionCoffreCheck()
-  local ms
-  local seetext = true 
-  while (function()
-      ms = 1000
-      if #(GetEntityCoords(PlayerPedId()) - Config.pose.coffre) <= 2 and ESX.PlayerData.job.name == Config.JobUtiliser then 
-          if seetext then
-            lib.showTextUI('[E] - coffre menu', {
-              position = "left-center",
-              style = {
-                  borderRadius = 0,
-                  backgroundColor = '#3fd2d5',
-                  color = 'white',
-              }
-            })
-          end
-          ms = 0 
+
+  while true do 
+
+      local ped = PlayerPedId()
+      local pos = GetEntityCoords(ped)
+      local menu = Config.pose.coffre
+      local dist = #(pos - menu)
+
+      if dist <= 2 and ESX.PlayerData.job.name == Config.JobUtiliser then
+
+          DrawMarker(2, menu, nil, nil, nil, -90, nil, nil,0.3, 0.2, 0.15, 30, 150, 30, 222, false, true, 0, false, false, false, false)
+
           if IsControlJustPressed(1,51) then
-            exports.ox_inventory:openInventory('stash', {id='coffre_mecano'})
-            seetext = false 
-            lib.hideTextUI()
+            exports.ox_inventory:openInventory('stash', {id='coffre_mecano', owner= false, job = tabac})
           end
+      else
+          Wait(1000)
       end
-  
-      if #(GetEntityCoords(PlayerPedId()) - Config.pose.coffre) > 2 then
-         lib.hideTextUI() 
-         seetext = true 
-      end
-
-      return true 
-    end)() do 
-      Wait(ms)
-    end
-end
-
-function InitPositionBossMenu()
-  CreateThread(PositionBossCheck)
-  CreateThread(PositionCoffreCheck)
-  CreateThread(PositionGarageCheckmeca)
-end
-
-
-AddEventHandler("onClientResourceStart", function()
-    InitPositionBossMenu()
+      Wait(0)
+  end
 end)
+
+
 
 ---BLIPS
 local blips = {
@@ -561,6 +513,108 @@ Citizen.CreateThread(function()
       EndTextCommandSetBlipName(info.blip)
   end
 end)
+
+---bar
+local function OpenMenuItem()
+  local menu = {}
+  for k, v in pairs(Bar) do 
+      menu[#menu+1] = {
+          title = v.label,
+          description = "acheter "..v.label.."",
+          onSelect = function() 
+            TriggerServerEvent('add', v.name, 1)
+           end,
+          image = v.image,
+      }
+  end
+  lib.registerContext({
+      id = "shop",
+      title = "SHOP MENU",
+      options = menu
+  })
+  lib.showContext('shop')
+end
+
+Citizen.CreateThread(function()
+  while true do
+      local Timer = 500
+      local plyPos = GetEntityCoords(PlayerPedId())
+      local dist = #(plyPos-Config.pose.shop)
+      if ESX.PlayerData.job.name == Config.JobUtiliser then
+      if dist <= 10.0 then
+       Timer = 0
+       DrawMarker(2, Config.pose.shop, nil, nil, nil, -90, nil, nil,0.3, 0.2, 0.15, 30, 150, 30, 222, false, true, 0, false, false, false, false)
+      end
+       if dist <= 3.0 then
+          Timer = 0
+          if IsControlJustPressed(1,51) then
+            OpenMenuItem()
+          end
+       end
+      end
+  Citizen.Wait(Timer)
+end
+end)
+
+---vestiere
+
+Citizen.CreateThread(function()
+  while true do
+      local Timer = 500
+      local plyPos = GetEntityCoords(PlayerPedId())
+      local dist = #(plyPos-Config.pose.vestiere)
+      if ESX.PlayerData.job.name == Config.JobUtiliser then
+      if dist <= 10.0 then
+       Timer = 0
+       DrawMarker(2, Config.pose.vestiere, nil, nil, nil, -90, nil, nil,0.3, 0.2, 0.15, 30, 150, 30, 222, false, true, 0, false, false, false, false)
+      end
+       if dist <= 3.0 then
+          Timer = 0
+          if IsControlJustPressed(1,51) then
+            lib.showContext('vestiere')
+          end
+       end
+      end
+  Citizen.Wait(Timer)
+end
+end)
+
+lib.registerContext({
+  id = 'vestiere',
+  title = 'VESTIERE',
+  options = {
+    {
+      title = 'tenu mecano',
+      icon = 'bars',
+      onSelect = function() vuniformetravail() end
+    },
+    {
+      title = 'remettre sa tenue',
+      icon = 'bars',
+      onSelect = function() vcivil() end
+    }
+}
+})
+
+function vuniformetravail()
+  TriggerEvent('skinchanger:getSkin', function(skin)
+      local uniformObject
+      if skin.sex == 0 then
+          uniformObject = Config.travail.male
+      else
+          uniformObject = Config.travail.female
+      end
+      if uniformObject then
+          TriggerEvent('skinchanger:loadClothes', skin, uniformObject)
+      end
+  end)
+end
+
+function vcivil()
+  ESX.TriggerServerCallback('esx_skin:getPlayerSkin', function(skin, jobSkin)
+      TriggerEvent('skinchanger:loadSkin', skin)
+  end)
+end
 
 
 
